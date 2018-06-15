@@ -11,34 +11,34 @@
 
 Для решение первой проблемы давайте вынесем все кастомные view за пределы контроллера,  тогда у контроллера останется одна основаная view, на которую можно будет добавлять другие кастомные view. 
 ```Swift
-  final class HomeViewController: UIViewController {
-  
-    lazy var homeView: HomeView {
-      let view = HomeView()
-      ...
-      return homeView
-    }
-  
-    private func setupHomeView() {
-      view.addSubview(homeView)
-      homeView.layout(on: view) // Strech view on superview
-    }
-  
+ final class HomeViewController: UIViewController {
+ 
+  lazy var homeView: HomeView {
+    let view = HomeView()
+    ...
+    return homeView
   }
+  
+  private func setupHomeView() {
+    view.addSubview(homeView)
+    homeView.layout(on: view) // Strech view on superview
+  }
+  
+}
 ```
 
 **Важно** Для более гибкого управление view можно вынести все UI компоненты наружу, например как `UITableViewCell`.  Это нам поможет лучше переиспользовать компонент для разных состояний. В качестве примера можно привести экран пустого состояния, который выглядит примерно так же как и экран ошибки, с небольшим отличием в цветах.
 
 Еще можно использовать фабрику `HomeView`, которая будет определять девайс и возвращать уже нужное View, например `HomeViewForiPad`.
 ```Swift
-  final class HomeViewFabric {
-    static func build() -> HomeView {
-      switch deviceType {
-        case iPhone: return HomeViewForiPhone()
-        case iPad: return HomeViewForiPad()
-      }
+final class HomeViewFabric {
+  static func build() -> HomeView {
+    switch deviceType {
+      case iPhone: return HomeViewForiPhone()
+      case iPad: return HomeViewForiPad()
     }
   }
+}
 ```
 
 В данном случае `HomeView` - протокол, который описывает интерфейс возвращаемой view. А уже в контроллере вы определяете поведение конкретных элементов. Например копирование название чего-либо по долгом нажатии на лейбл.
@@ -47,36 +47,36 @@
 
 Так же такой подход очень круто работает с `state machine`, где состояние экрана или модуля управляет отображаемой view. При этом состояние экрана не может управлять процессам, как это сделано в `YARCH`, причем в данном кейсе наоборот, процессы управляют состоянием. В таком случае управление view выглядит следующим образом.
 ```Swift
-  enum HomeViewState {
-    case loading
-    case empty
-    case error(Error)
-    case success(Data)
-  }
+enum HomeViewState {
+  case loading
+  case empty
+  case error(Error)
+  case success(Data)
+}
   
-  var state = .loading {
-    didSet { updateUI(for: state) }
-  }
+var state = .loading {
+  didSet { updateUI(for: state) }
+}
   
-  private func updateUI(for state: HomeViewState) {
-    switch state {
-      case loading: setupLoadingView()
-      case empty: setupEmptyView()
-      case error(let error): setupErrorView(error)
-      case success(let data): setupSuccessView(data)
-    }
+private func updateUI(for state: HomeViewState) {
+  switch state {
+    case loading: setupLoadingView()
+    case empty: setupEmptyView()
+    case error(let error): setupErrorView(error)
+    case success(let data): setupSuccessView(data)
   }
+}
   
-  private func setupLoadingView() {
-    removeSubviews(on: view) // Removee all subviews on view
-    let loadingView = LoadingView()
-    view.addSubview(loadingView)
-    loadingView.layout(on: view)
-  }
+private func setupLoadingView() {
+  removeSubviews(on: view) // Removee all subviews on view
+  let loadingView = LoadingView()
+  view.addSubview(loadingView)
+  loadingView.layout(on: view)
+}
   
-  private func setupEmptyView() { ... }
-  private func setupErrorView(_ error: Error) { ... }
-  private func setupSuccessView(_ data: Data) { ... }
+private func setupEmptyView() { ... }
+private func setupErrorView(_ error: Error) { ... }
+private func setupSuccessView(_ data: Data) { ... }
 ```
 
 Супер, мы получили много плюсов от этих двух подходов. Давайте на этой ноте подведем итоги   
